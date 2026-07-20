@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=0.8">
+  <title>Anomali Nisak</title>
+  <link rel="icon" href="https://files.catbox.moe/80adbv.jpg" type="image/jpeg">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Dancing+Script:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;outline:none;-webkit-user-select:none;user-select:none}
+    button:focus,button:active,div:focus,div:active{outline:none!important;-webkit-tap-highlight-color:transparent!important;box-shadow:none!important}
+    button{-webkit-appearance:none;appearance:none;border:none;background:none;font-family:inherit;cursor:pointer}
+
+    /* ===== LOADING SCREEN ===== */
+    .loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(160deg,#e3f2fd 0%,#d4eafc 30%,#c6e2ff 60%,#e8f4fd 100%);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease,visibility 0.6s ease}
+    .loading-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+    .loading-screen::before{content:"";position:fixed;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle at 15% 20%,rgba(255,255,255,0.7) 8%,transparent 20%),radial-gradient(circle at 85% 25%,rgba(255,255,255,0.6) 12%,transparent 25%),radial-gradient(circle at 50% 70%,rgba(255,255,255,0.5) 15%,transparent 28%),radial-gradient(circle at 20% 80%,rgba(255,255,255,0.55) 9%,transparent 22%),radial-gradient(circle at 70% 15%,rgba(255,255,255,0.65) 11%,transparent 24%);background-repeat:no-repeat;pointer-events:none;z-index:-1}
+    .loading-heart{font-size:clamp(3rem,8vw,5rem);animation:heartBeat 0.8s ease-in-out infinite}
+    @keyframes heartBeat{0%,100%{transform:scale(1)}25%{transform:scale(1.15)}50%{transform:scale(1)}75%{transform:scale(1.1)}}
+    .loading-text{font-family:'Dancing Script',cursive;font-size:clamp(1.2rem,3.5vw,1.6rem);color:#5b7fa5;margin-top:16px;font-weight:600;letter-spacing:0.5px}
+    .loading-bar-container{width:clamp(200px,50vw,280px);height:6px;background:#d4eafc;border-radius:10px;margin-top:20px;overflow:hidden}
+    .loading-bar{height:100%;background:linear-gradient(90deg,#b4d4f0,#709cc0);border-radius:10px;width:0%;transition:width 0.3s ease}
+    .loading-percent{font-family:'Cormorant Garamond',serif;font-size:0.9rem;color:#709cc0;margin-top:8px;font-weight:600}
+
+    body{background:linear-gradient(160deg,#e3f2fd 0%,#d4eafc 30%,#c6e2ff 60%,#e8f4fd 100%);background-attachment:fixed;min-height:100vh;min-height:100dvh;display:flex;justify-content:center;align-items:center;margin:0;padding:0;position:relative;overflow-x:hidden;overflow-y:auto}
+    body::before{content:"";position:fixed;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(circle at 15% 20%,rgba(255,255,255,0.7) 8%,transparent 20%),radial-gradient(circle at 85% 25%,rgba(255,255,255,0.6) 12%,transparent 25%),radial-gradient(circle at 50% 70%,rgba(255,255,255,0.5) 15%,transparent 28%),radial-gradient(circle at 20% 80%,rgba(255,255,255,0.55) 9%,transparent 22%),radial-gradient(circle at 70% 15%,rgba(255,255,255,0.65) 11%,transparent 24%);background-repeat:no-repeat;pointer-events:none;z-index:0}
+    .custom-notif{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-120px);background:rgba(255,255,255,0.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:28px;padding:14px 24px;box-shadow:0 15px 35px rgba(100,140,180,0.3),0 0 0 1px rgba(180,210,240,0.5);z-index:999;display:flex;align-items:center;gap:10px;opacity:0;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1),opacity 0.35s ease;max-width:90vw;pointer-events:none}
+    .custom-notif.show{transform:translateX(-50%) translateY(0);opacity:1}
+    .custom-notif .notif-icon{font-size:1.6rem;flex-shrink:0}
+    .custom-notif .notif-text{font-weight:600;color:#4a6f8f;font-size:0.95rem;letter-spacing:0.3px}
+    .app-wrapper{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:2;padding:12px;min-height:100vh;min-height:100dvh}
+    .screen{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+    .hidden{display:none!important}
+    h2{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,5.5vw,2.2rem);font-weight:600;color:#5b7fa5;margin-bottom:24px;letter-spacing:0.6px;font-style:italic}
+    .btn{font-family:'Libre Baskerville',serif;background:#eef6ff;padding:16px 28px;border-radius:50px;font-size:clamp(1.1rem,3.8vw,1.35rem);font-weight:550;color:#446a8c;box-shadow:0 6px 14px rgba(130,170,210,0.25);cursor:pointer;transition:all 0.3s ease;width:88%;letter-spacing:0.5px;background:#f3f9ff;border:1px solid #cde0f5;display:flex;align-items:center;justify-content:center;gap:8px;touch-action:manipulation}
+    .btn:active{background:#e4f0fd;transform:scale(0.97)}
+    .btn-sub-text{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:0.9rem;color:#7a9bb5}
+    .music-credit{font-family:'EB Garamond',serif;font-style:italic;color:#6b8fae;font-size:1.05rem;margin-top:20px;letter-spacing:0.4px}
+    .quiz-box{background:rgba(248,252,255,0.8);border-radius:36px;padding:24px 16px;width:100%;backdrop-filter:blur(10px)}
+    .question{font-family:'Crimson Text',serif;font-size:clamp(1.3rem,4.5vw,1.6rem);font-weight:600;color:#406684;margin-bottom:24px;letter-spacing:0.3px}
+    .options-list{display:flex;flex-direction:column;gap:12px;width:100%;align-items:center}
+    .option-btn{font-family:'EB Garamond',serif;background:white;padding:16px 24px;border-radius:50px;font-size:clamp(1.1rem,3.5vw,1.3rem);font-weight:600;color:#3c5f7c;background:#f3faff;box-shadow:0 5px 12px rgba(120,160,200,0.2);cursor:pointer;width:90%;border:2px solid #cfe1f5;transition:all 0.2s ease;touch-action:manipulation;letter-spacing:0.4px}
+    .option-btn:active{background:#cfe2f7;transform:scale(0.96)}
+    .option-btn.correct{background:#d4edda;border-color:#a8d5ba;color:#2d5a3d;animation:popCorrect 0.4s ease}
+    .option-btn.wrong{background:#fce4ec;border-color:#f5c6d0;color:#8b3a4a;animation:shake 0.5s ease}
+    @keyframes popCorrect{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-4px)}}
+    .gift-top-text{font-family:'Dancing Script',cursive;font-size:clamp(1.8rem,6vw,2.6rem);color:#5b7fa5;margin-bottom:8px;font-weight:600;letter-spacing:0.5px}
+    .gift-wrapper{position:relative;display:flex;flex-direction:column;align-items:center;width:92vw;max-width:460px}
+    .gift-img{width:100%;height:auto;cursor:pointer;transition:transform 0.3s ease,filter 0.4s ease;filter:drop-shadow(0 16px 28px rgba(100,140,180,0.4));touch-action:manipulation}
+    .sparkle{position:absolute;pointer-events:none;font-size:1.4rem;opacity:0;animation:sparkleFloat 0.9s ease-out forwards;z-index:10}
+    @keyframes sparkleFloat{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0.2)}}
+    .gift-img.wiggle{animation:giftWiggle 0.6s ease-in-out}
+    .gift-img.glow-open{animation:giftGlowOpen 1.2s ease-out forwards;pointer-events:none}
+    @keyframes giftWiggle{0%,100%{transform:translateX(0) rotate(0deg)}15%{transform:translateX(-8px) rotate(-4deg)}30%{transform:translateX(8px) rotate(4deg)}45%{transform:translateX(-6px) rotate(-3deg)}60%{transform:translateX(6px) rotate(3deg)}75%{transform:translateX(-3px) rotate(-1deg)}90%{transform:translateX(3px) rotate(1deg)}}
+    @keyframes giftGlowOpen{0%{transform:scale(1);filter:brightness(1) drop-shadow(0 16px 28px rgba(100,140,180,0.4))}25%{transform:scale(1.04);filter:brightness(1.2) drop-shadow(0 20px 35px rgba(160,200,230,0.5))}50%{transform:scale(1.08);filter:brightness(1.5) drop-shadow(0 25px 40px rgba(200,220,250,0.6))}75%{transform:scale(1.1);filter:brightness(1.8) drop-shadow(0 30px 50px rgba(220,240,255,0.7))}100%{transform:scale(1.15);filter:brightness(2.5) drop-shadow(0 35px 55px rgba(240,250,255,0.8));opacity:0.5}}
+    .gift-bottom-text{font-family:'Cormorant Garamond',serif;font-size:clamp(1.1rem,3.5vw,1.4rem);color:#527a9e;font-weight:600;margin-top:12px;font-style:italic;letter-spacing:0.5px}
+    .letter-img{width:clamp(170px,55vw,240px);height:auto;filter:drop-shadow(0 14px 28px rgba(100,140,180,0.35));transition:all 0.5s ease}
+    .letter-img.tear{animation:tearLetter 0.7s ease-out forwards}
+    @keyframes tearLetter{0%{transform:scale(1) rotate(0deg);clip-path:inset(0 0 0 0);opacity:1}40%{transform:scale(1.05) rotate(2deg);clip-path:inset(0 50% 0 0);opacity:1}70%{transform:scale(1.1) rotate(-2deg);clip-path:inset(0 0 0 50%);opacity:0.7}100%{transform:scale(1.2);clip-path:inset(0 100% 0 0);opacity:0}}
+    .flash-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:99;opacity:0;pointer-events:none;transition:opacity 0.15s ease}
+    .flash-overlay.active{opacity:1;transition:opacity 0.05s ease}
+    .letter-hint{font-family:'Dancing Script',cursive;font-weight:600;color:#4e7799;margin-bottom:8px;font-size:clamp(1.2rem,3.5vw,1.5rem);letter-spacing:0.5px}
+    .slide-wrapper{display:flex;flex-direction:column;align-items:center;gap:10px;margin:18px auto 10px}
+    .slide-container{width:clamp(220px,70vw,280px);height:54px;background:#e2effb;border-radius:32px;position:relative;overflow:hidden;cursor:pointer;border:1px solid #c4ddf5;touch-action:pan-x}
+    .slide-track{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#b4d4f0,#8ab8dd);border-radius:32px;width:0%;pointer-events:none}
+    .slide-thumb{position:absolute;left:6px;top:6px;width:42px;height:42px;background:white;border-radius:50%;box-shadow:0 4px 16px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none;transition:none}
+    .slide-text{font-family:'Crimson Text',serif;font-weight:600;color:#4a6f8f;font-size:0.9rem;letter-spacing:0.5px}
+    .paper-stage{width:100%;display:flex;flex-direction:column;align-items:center;perspective:1200px}
+    .paper-card{width:94vw;max-width:480px;aspect-ratio:16/9;position:relative;transform-style:preserve-3d;transition:transform 0.8s cubic-bezier(0.4,0,0.2,1);cursor:pointer;margin:0 auto;border-radius:8px}
+    .paper-card.flipped{transform:rotateY(180deg)}
+    .paper-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .paper-front{background:linear-gradient(145deg,#fffef7 0%,#fef9f0 50%,#fdf6ec 100%);border:1px solid rgba(200,180,160,0.3);box-shadow:0 15px 35px rgba(100,140,180,0.25);z-index:2;padding:24px}
+    .paper-front .seal{width:clamp(45px,12vw,60px);height:clamp(45px,12vw,60px);background:#e8c4c4;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(1.4rem,3.5vw,1.8rem);margin-bottom:18px;box-shadow:0 4px 10px rgba(0,0,0,0.1)}
+    .paper-front .from-text{font-family:'Dancing Script',cursive;font-size:clamp(1.8rem,5vw,2.4rem);color:#4a3540;text-align:center;line-height:1.4}
+    .paper-front .from-name{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(1.4rem,4vw,1.8rem);color:#6b5060;margin-top:4px}
+    .paper-front .from-sub{font-family:'EB Garamond',serif;color:#8b7078;font-size:clamp(0.9rem,2.5vw,1.1rem);margin-top:8px}
+    .paper-front .flip-hint{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(0.85rem,2.3vw,1rem);color:#a09090;margin-top:16px}
+    .paper-back{background:#fffef7;background-image:linear-gradient(#e8d5e0 1px,transparent 1px);background-size:100% 30px;background-position:0 6px;transform:rotateY(180deg);border-radius:8px;box-shadow:0 15px 35px rgba(100,140,180,0.25);border:1px solid rgba(200,180,160,0.3);padding:30px 20px 30px 46px;text-align:left;justify-content:flex-start;align-items:stretch;overflow:hidden;position:relative}
+    .paper-back::before{content:'';position:absolute;left:38px;top:30px;bottom:30px;width:2px;background:rgba(200,150,150,0.4);border-radius:1px;z-index:1}
+    .paper-back .letter-content{font-family:'EB Garamond',serif;font-size:clamp(0.8rem,2.3vw,0.95rem);line-height:30px;color:#3a2830;white-space:pre-wrap;word-break:break-word;letter-spacing:0.3px;text-align:left;width:100%;overflow-y:auto;max-height:100%}
+    .full-letter-wrapper{width:94vw;max-width:480px;margin:0 auto;background:#fffef7;background-image:linear-gradient(#e8d5e0 1px,transparent 1px);background-size:100% 30px;background-position:0 6px;border-radius:8px;box-shadow:0 15px 35px rgba(100,140,180,0.25);border:1px solid rgba(200,180,160,0.3);padding:30px 20px 30px 46px;text-align:left;position:relative}
+    .full-letter-wrapper::before{content:'';position:absolute;left:38px;top:30px;bottom:30px;width:2px;background:rgba(200,150,150,0.4);border-radius:1px;z-index:1}
+    .full-letter-content{font-family:'EB Garamond',serif;font-size:clamp(0.85rem,2.5vw,1rem);line-height:30px;color:#3a2830;white-space:pre-wrap;word-break:break-word;letter-spacing:0.3px;text-align:left;width:100%}
+    .full-letter-content .signature{font-family:'Dancing Script',cursive;font-size:clamp(1.2rem,3.5vw,1.5rem);color:#6b5060;margin-top:16px;font-weight:600;display:block;line-height:30px}
+    .full-letter-content .love-line{font-family:'Playfair Display',serif;font-style:italic;color:#8b6070;font-size:clamp(0.85rem,2.5vw,1rem);display:block;line-height:30px}
+    .lucide{width:24px;height:24px;stroke:#50789c;stroke-width:2}
+  </style>
+</head>
+<body>
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-heart">💝</div>
+    <p class="loading-text">menyiapkan kejutan untukmu...</p>
+    <div class="loading-bar-container"><div class="loading-bar" id="loadingBar"></div></div>
+    <p class="loading-percent" id="loadingPercent">0%</p>
+  </div>
+  <div class="custom-notif" id="customNotif"><span class="notif-icon" id="notifIcon">💙</span><span class="notif-text" id="notifText"></span></div>
+  <div class="flash-overlay" id="flashOverlay"></div>
+  <div class="app-wrapper" id="appWrapper">
+    <div id="screenMusic" class="screen">
+      <div style="margin-bottom:16px"><i data-lucide="music" style="width:50px;height:50px;stroke:#709cc0"></i></div>
+      <h2>mau pakai lagu atau tidak? 🤔</h2>
+      <div style="display:flex;flex-direction:column;gap:18px;width:100%;align-items:center">
+        <button class="btn" id="btnNoMusic"><i data-lucide="volume-x" style="width:22px;height:22px"></i> tidak usah</button>
+        <button class="btn" id="btnYesMusic"><i data-lucide="music-4" style="width:22px;height:22px"></i> mau mau<span class="btn-sub-text" style="display:block;margin-top:2px">about you</span></button>
+      </div>
+      <p class="music-credit"><i data-lucide="disc-3" style="width:16px;height:16px;display:inline;vertical-align:middle"></i> about you · the 1975</p>
+    </div>
+    <div id="screenQuiz" class="screen hidden"><div class="quiz-box"><div class="question" id="quizQuestion"></div><div class="options-list" id="optionsList"></div></div></div>
+    <div id="screenGift" class="screen hidden">
+      <div id="giftPhase">
+        <p class="gift-top-text">🎀 ada kado buat kamu nih</p>
+        <div class="gift-wrapper" id="giftWrapper"><img id="giftImage" src="https://files.catbox.moe/lo17p6.png" alt="Kado" class="gift-img" draggable="false"></div>
+        <p class="gift-bottom-text" id="tapInstruction">tap untuk buka kado ✨</p>
+      </div>
+      <div id="letterPhase" class="hidden" style="display:flex;flex-direction:column;align-items:center;width:100%">
+        <p class="letter-hint">surat? isinya apa tuh kira kira 🫣</p>
+        <img id="letterImage" src="https://files.catbox.moe/el14o0.png" alt="Surat" class="letter-img" draggable="false">
+        <div class="slide-wrapper"><div class="slide-container" id="slideContainer"><div class="slide-track" id="slideTrack"></div><div class="slide-thumb" id="slideThumb"><i data-lucide="chevron-right" style="width:18px;height:18px;stroke:#50789c"></i></div></div><span class="slide-text" id="slideText">geser untuk buka surat →</span></div>
+      </div>
+      <div id="paperPhase" class="hidden" style="width:100%;display:flex;flex-direction:column;align-items:center">
+        <div class="paper-stage"><div class="paper-card" id="paperCard"><div class="paper-face paper-front"><div class="seal">💌</div><div class="from-text">from<br><span class="from-name">mirja</span></div><p class="from-sub">baik banget asli 🥹</p><p class="flip-hint">👆 tap untuk balik kertas</p></div><div class="paper-face paper-back" id="paperBack"><div class="letter-content" id="letterContentPreview">aloo nisak, hari ini bener bener hari kamu, hari apa tuh?, ya hari dimana orang yang paling aku sayang lahir ke dunia lahh...</div></div></div></div>
+      </div>
+      <div id="paperFullPhase" class="hidden" style="width:100%;display:flex;flex-direction:column;align-items:center"><div class="full-letter-wrapper"><div class="full-letter-content" id="letterContentFull"></div></div></div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      const loadingScreen=document.getElementById('loadingScreen'),loadingBar=document.getElementById('loadingBar'),loadingPercent=document.getElementById('loadingPercent');
+      const assetsToLoad=['https://files.catbox.moe/lo17p6.png','https://files.catbox.moe/el14o0.png','https://files.catbox.moe/va8imp.m4a'];
+      let loadedCount=0;const totalAssets=assetsToLoad.length;
+      function updateLoadingProgress(){loadedCount++;const p=Math.round((loadedCount/totalAssets)*100);loadingBar.style.width=p+'%';loadingPercent.textContent=p+'%';if(loadedCount>=totalAssets){setTimeout(()=>{loadingScreen.classList.add('hidden');lucide.createIcons()},500)}}
+      assetsToLoad.forEach(url=>{if(url.endsWith('.m4a')||url.endsWith('.mp3')){const a=new Audio();a.preload='auto';a.src=url;a.addEventListener('loadeddata',updateLoadingProgress,{once:true});a.addEventListener('error',updateLoadingProgress,{once:true})}else{const i=new Image();i.src=url;i.onload=updateLoadingProgress;i.onerror=updateLoadingProgress}});
+      setTimeout(()=>{if(loadedCount<totalAssets){loadingBar.style.width='100%';loadingPercent.textContent='100%';setTimeout(()=>loadingScreen.classList.add('hidden'),400)}},8000);
+      lucide.createIcons();
+      const customNotif=document.getElementById('customNotif'),notifIcon=document.getElementById('notifIcon'),notifText=document.getElementById('notifText'),flashOverlay=document.getElementById('flashOverlay');let notifTimer=null;
+      function showCustomNotification(m,i='💙'){if(notifTimer)clearTimeout(notifTimer);notifIcon.textContent=i;notifText.textContent=m;customNotif.classList.add('show');notifTimer=setTimeout(()=>{customNotif.classList.remove('show')},2200)}
+      function triggerFlash(cb){flashOverlay.classList.add('active');setTimeout(()=>{flashOverlay.classList.remove('active');if(cb)cb()},180)}
+      function createSparkle(x,y,c){const e=['✨','💫','⭐','🌟','💖'];const s=document.createElement('span');s.className='sparkle';s.textContent=e[Math.floor(Math.random()*e.length)];s.style.left=x+'px';s.style.top=y+'px';s.style.setProperty('--dx',(Math.random()*60-30)+'px');s.style.setProperty('--dy',(Math.random()*-60-20)+'px');c.appendChild(s);setTimeout(()=>s.remove(),900)}
+      const questions=[{text:"🎂 Berapa Ultah Kamu?",options:["10 Juli 2011","20 Juli 2011","30 Juli 2011"],correct:1},{text:"⚔️ Apa Hero Favoritmu di ML?",options:["Rafaela","Zilong","Kagura"],correct:2}];
+      let currentQuestionIndex=0,musicEnabled=false,audioElement=null;
+      const screenMusic=document.getElementById('screenMusic'),screenQuiz=document.getElementById('screenQuiz'),screenGift=document.getElementById('screenGift'),quizQuestion=document.getElementById('quizQuestion'),optionsList=document.getElementById('optionsList'),giftPhase=document.getElementById('giftPhase'),giftImage=document.getElementById('giftImage'),giftWrapper=document.getElementById('giftWrapper'),tapInstruction=document.getElementById('tapInstruction'),letterPhase=document.getElementById('letterPhase'),letterImage=document.getElementById('letterImage'),slideContainer=document.getElementById('slideContainer'),slideTrack=document.getElementById('slideTrack'),slideThumb=document.getElementById('slideThumb'),slideText=document.getElementById('slideText'),paperPhase=document.getElementById('paperPhase'),paperFullPhase=document.getElementById('paperFullPhase'),paperCard=document.getElementById('paperCard'),letterContentFull=document.getElementById('letterContentFull');
+      let tapCount=0,maxTaps=3,isAnimating=false,isFlipped=false,isAnswering=false;
+      function setupAudio(p){if(p){if(!audioElement){audioElement=new Audio('https://files.catbox.moe/va8imp.m4a');audioElement.loop=true;audioElement.volume=0.35}audioElement.play().catch(()=>{})}else{if(audioElement){audioElement.pause();audioElement=null}}}
+      function showScreen(s){screenMusic.classList.add('hidden');screenQuiz.classList.add('hidden');screenGift.classList.add('hidden');s.classList.remove('hidden');lucide.createIcons()}
+      function loadQuestion(i){currentQuestionIndex=i;isAnswering=false;const q=questions[i];quizQuestion.textContent=q.text;optionsList.innerHTML='';q.options.forEach((o,idx)=>{const b=document.createElement('button');b.className='option-btn';b.textContent=o;b.addEventListener('click',()=>handleOptionClick(idx,b));optionsList.appendChild(b)})}
+      function handleOptionClick(si,btn){if(isAnswering)return;isAnswering=true;const q=questions[currentQuestionIndex];const all=optionsList.querySelectorAll('.option-btn');if(si===q.correct){btn.classList.add('correct');showCustomNotification('✨ Yey! Bener banget sayang!','🎉');setTimeout(()=>{if(currentQuestionIndex<questions.length-1){loadQuestion(currentQuestionIndex+1)}else{showCustomNotification('🎂 Widihh bener semua! Kamu memang paling hebat!','💙');setTimeout(()=>{showScreen(screenGift);resetGiftState()},500)}},600)}else{btn.classList.add('wrong');all[q.correct].classList.add('correct');showCustomNotification('💭 Hmm belum tepat nih, coba lagi ya!','🌸');setTimeout(()=>{loadQuestion(currentQuestionIndex)},800)}}
+      function resetGiftState(){giftPhase.classList.remove('hidden');letterPhase.classList.add('hidden');paperPhase.classList.add('hidden');paperFullPhase.classList.add('hidden');tapCount=0;isAnimating=false;isFlipped=false;tapInstruction.textContent='tap untuk buka kado ✨';giftImage.classList.remove('wiggle','glow-open');giftImage.style.opacity='1';giftImage.style.transform='scale(1)';giftImage.style.pointerEvents='auto';letterImage.classList.remove('tear');letterImage.style.opacity='1';letterImage.style.clipPath='inset(0 0 0 0)';slideTrack.style.width='0%';slideThumb.style.left='6px';slideText.style.opacity='1';paperCard.classList.remove('flipped');letterContentFull.innerHTML='';const ss=giftWrapper.querySelectorAll('.sparkle');ss.forEach(s=>s.remove())}
+      giftImage.addEventListener('click',(e)=>{e.preventDefault();if(giftPhase.classList.contains('hidden'))return;if(isAnimating)return;tapCount++;const rect=giftWrapper.getBoundingClientRect();const x=e.clientX-rect.left;const y=e.clientY-rect.top;createSparkle(x,y,giftWrapper);if(tapCount<maxTaps){isAnimating=true;giftImage.classList.add('wiggle');setTimeout(()=>{giftImage.classList.remove('wiggle');isAnimating=false},600)}else{isAnimating=true;tapInstruction.textContent='terbuka... 💫';giftImage.classList.add('glow-open');giftImage.style.pointerEvents='none';for(let i=0;i<8;i++){setTimeout(()=>{const cx=Math.random()*rect.width;const cy=Math.random()*rect.height;createSparkle(cx,cy,giftWrapper)},i*100)}setTimeout(()=>{giftPhase.classList.add('hidden');letterPhase.classList.remove('hidden');letterPhase.style.display='flex';resetSlideState();lucide.createIcons();showCustomNotification('🎁 Kado terbuka! Ada surat!','💌')},1200)}});
+      let isDragging=false,currentLeft=6;const maxLeft=220;
+      function resetSlideState(){currentLeft=6;slideTrack.style.width='0%';slideThumb.style.left='6px';slideText.style.opacity='1';isDragging=false}
+      function updateSlidePosition(cx){const cr=slideContainer.getBoundingClientRect();const rx=cx-cr.left;let nl=rx-21;nl=Math.max(6,Math.min(maxLeft,nl));currentLeft=nl;const p=((nl-6)/(maxLeft-6))*100;slideTrack.style.width=p+'%';slideThumb.style.left=nl+'px';slideText.style.opacity=p>50?Math.max(0,1-(p-50)/50):'1';return p}
+      function handleSlideStart(e){if(letterPhase.classList.contains('hidden'))return;if(letterImage.classList.contains('tear'))return;e.preventDefault();isDragging=true;slideContainer.style.transition='none';slideThumb.style.transition='none';slideTrack.style.transition='none'}
+      function handleSlideMove(e){if(!isDragging)return;e.preventDefault();const cx=e.touches?e.touches[0].clientX:e.clientX;const p=updateSlidePosition(cx);if(p>=98)finishSlideOpen()}
+      function handleSlideEnd(){if(!isDragging)return;isDragging=false;if(currentLeft<maxLeft-10){slideThumb.style.transition='left 0.3s ease';slideTrack.style.transition='width 0.3s ease';currentLeft=6;slideTrack.style.width='0%';slideThumb.style.left='6px';slideText.style.opacity='1'}}
+      slideContainer.addEventListener('touchstart',handleSlideStart,{passive:false});slideContainer.addEventListener('touchmove',handleSlideMove,{passive:false});slideContainer.addEventListener('touchend',handleSlideEnd);slideContainer.addEventListener('touchcancel',handleSlideEnd);slideContainer.addEventListener('mousedown',handleSlideStart);window.addEventListener('mousemove',(e)=>{if(isDragging){e.preventDefault();handleSlideMove(e)}});window.addEventListener('mouseup',()=>{if(isDragging)handleSlideEnd()});
+      function finishSlideOpen(){isDragging=false;slideTrack.style.width='100%';slideThumb.style.left=maxLeft+'px';slideText.style.opacity='0';setTimeout(()=>{letterImage.classList.add('tear');setTimeout(()=>{triggerFlash(()=>{letterPhase.classList.add('hidden');paperPhase.classList.remove('hidden');paperFullPhase.classList.add('hidden');isFlipped=false;paperCard.classList.remove('flipped');letterContentFull.innerHTML='';showCustomNotification('💌 Ada kertas! Balik untuk lihat isinya~','📄')})},700)},200)}
+      paperCard.addEventListener('click',()=>{if(paperPhase.classList.contains('hidden'))return;if(!isFlipped){isFlipped=true;paperCard.classList.add('flipped');showCustomNotification('✨ Kertas dibalik!','📝')}else{paperPhase.classList.add('hidden');paperFullPhase.classList.remove('hidden');fillFullLetter();showCustomNotification('💌 Surat terbuka!','🤍');setTimeout(()=>{window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})},100)}});
+      function fillFullLetter(){const m=`aloo nisak, hari ini bener bener hari kamu, hari apa tuh?, ya hari dimana orang yang paling aku sayang lahir ke dunia lahh. makasih ya bb udah hadir di dunia ini, dan lebih makasih lagi karena kamu juga hadir di hidup aku. jujur, sejak kenal kamu hari hari aku jadi jauh lebih berwarna. kamu selalu bisa bikin aku senyum sendiri, ketawa sendiri, bahkan hal hal kecil yang kamu lakuin aja udah cukup bikin aku bahagia.
+
+semoga di umur kamu yang sekarang, semua doa baik kamu satu satu dikabulin sama Allah. semoga kamu selalu sehat, panjang umur, bahagia terus, sekolahnya lancar, cita citanya tercapai, semua yang kamu usahain dipermudah, rezekinya dilancarin, dan semoga kamu selalu dikelilingi orang orang yang tulus sayang sama kamu. aku juga berharap semoga semua hal baik selalu ada di pihak kamu, dan apapun yang kamu hadapi nanti, semoga Tuhan selalu kasih jalan yang terbaik buat kamu.
+
+aku cuma pengen kamu lebih banyak senyum di tahun ini. jangan terlalu keras sama diri sendiri ya sayang. kalau capek istirahat, kalau sedih cerita, jangan dipendem sendirian. aku harap aku bisa terus ada buat dengerin semua cerita kamu, nemenin kamu, jadi tempat kamu pulang, dan jadi orang yang selalu bisa bikin kamu ngerasa aman dan dihargai.
+
+maafin juga ya bb kalau hadiah dari aku belum mahal dan belum semewah yang mungkin kamu bayangin hehe. mau gimana lagi, gaji aku baru segini 😭. insyaAllah kalau nanti rezeki aku udah lebih banyak, aku pengen kasih kamu hadiah hadiah yang lebih bagus lagi. pelan pelan yaa, doain aku biar makin semangat kerja dan bisa bahagiain kamu lebih banyak lagi.
+
+maafin juga ya kalau selama ini aku kadang masih kurang peka, kadang bikin kamu kesel, bikin kamu ngambek, atau ada sikap dan kata kata aku yang tanpa sadar nyakitin hati kamu. aku tau aku masih banyak kurangnya, tapi aku janji bakal terus belajar dan berusaha jadi pasangan yang lebih baik buat kamu, sedikit demi sedikit.
+
+sekali lagi, happy birthday ya sayangkuu. semoga di umur yang baru ini kamu makin bahagia, makin banyak alasan buat senyum, makin banyak doa yang terkabul, dan semua mimpi yang kamu simpan pelan pelan bisa jadi kenyataan. jangan pernah lupa kalau kamu berharga, kamu dicintai, dan kamu punya aku yang selalu dukung kamu.
+
+<span class="love-line">i love you so much, more than i can explain with words. thank you for being my favorite person, my safe place, and my happiness.</span>
+
+semoga ini jadi awal dari tahun terbaik buat kamu. once again, happy birthday, my world.
+
+<span class="signature">i love you always. 🤍🐣</span>`;letterContentFull.innerHTML=m;lucide.createIcons()}
+      document.getElementById('btnNoMusic').addEventListener('click',()=>{musicEnabled=false;setupAudio(false);showScreen(screenQuiz);loadQuestion(0);showCustomNotification('🎀 Tanpa musik ya, lebih fokus!','🤍')});
+      document.getElementById('btnYesMusic').addEventListener('click',()=>{musicEnabled=true;setupAudio(true);showScreen(screenQuiz);loadQuestion(0);showCustomNotification('🎶 About You diputar ~ enjoy!','🎵')});
+      showScreen(screenMusic);lucide.createIcons();
+    })();
+  </script>
+</body>
+</html>
